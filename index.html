@@ -403,7 +403,7 @@ async function saveToApi() {
   btn.disabled = true;
   btn.textContent = 'Salvando...';
   try {
-    const res = await fetch("http://localhost:3000/survey", {
+    const res = await fetch("http://api.cabritech.com.br/survey", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(buildPayload()),
