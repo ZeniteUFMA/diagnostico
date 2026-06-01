@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Diagnóstico de Carreira</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --brand: #1D9E75;
+    --brand-light: #E1F5EEE0;
+    --brand-dark: #085041;
+    --bg: #f7f8f6;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.1);
+    --border-hover: rgba(0,0,0,0.25);
+    --text: #1a1a1a;
+    --muted: #666;
+    --hint: #999;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141414;
+      --surface: #1e1e1e;
+      --border: rgba(255,255,255,0.1);
+      --border-hover: rgba(255,255,255,0.25);
+      --text: #f0f0f0;
+      --muted: #aaa;
+      --hint: #666;
+      --brand-light: rgba(29,158,117,0.15);
+    }
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .app { width: 100%; max-width: 600px; }
+
+  /* Header */
+  .app-header { text-align: center; margin-bottom: 2.5rem; }
+  .logo-dot { width: 48px; height: 48px; background: var(--brand); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+  .logo-dot svg { fill: #fff; width: 24px; height: 24px; }
+  .app-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .app-sub { font-size: 14px; color: var(--muted); }
+
+  /* Progress */
+  .progress-wrap { margin-bottom: 1.75rem; }
+  .progress-bar { display: flex; gap: 5px; margin-bottom: 8px; }
+  .prog-seg { flex: 1; height: 5px; border-radius: 3px; background: var(--border); transition: background 0.3s; }
+  .prog-seg.done { background: var(--brand); }
+  .prog-seg.active { background: var(--brand); opacity: 0.45; }
+  .progress-label { font-size: 12px; color: var(--hint); text-align: right; }
+
+  /* Card */
+  .card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.75rem; margin-bottom: 1rem; }
+
+  /* Section header */
+  .section-badge { display: inline-block; font-size: 11px; font-weight: 600; color: var(--brand); background: var(--brand-light); padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.07em; }
+  .section-title { font-size: 19px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .section-desc { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* Questions */
+  .question { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  .question:first-of-type { margin-top: 1.25rem; }
+  .q-text { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 12px; line-height: 1.5; }
+
+  /* Chips */
+  .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { cursor: pointer; padding: 8px 15px; border-radius: 22px; border: 1px solid var(--border); font-size: 13px; color: var(--muted); background: transparent; transition: all 0.15s; user-select: none; }
+  .chip:hover { border-color: var(--brand); color: var(--brand); }
+  .chip.selected { background: var(--brand-light); border-color: var(--brand); color: var(--brand-dark); font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .chip.selected { color: #5DCAA5; } }
+
+  /* Scale */
+  .scale-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .scale-btn { width: 50px; height: 50px; border-radius: var(--radius); border: 1px solid var(--border); background: transparent; font-size: 15px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .scale-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .scale-btn.selected { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .scale-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--hint); margin-top: 6px; }
+
+  /* Text inputs */
+  .txt-input { width: 100%; padding: 11px 14px; font-size: 14px; font-family: inherit; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); background: var(--bg); transition: border 0.15s; }
+  .txt-input:focus { outline: none; border-color: var(--brand); }
+  textarea.txt-input { resize: vertical; min-height: 90px; }
+
+  /* Nav */
+  .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
+  .btn { padding: 11px 22px; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; border: 1px solid var(--border); background: transparent; color: var(--muted); }
+  .btn:hover { background: var(--bg); }
+  .btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .btn-primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+
+  /* Result */
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 1.25rem 0; }
+  .metric-card { background: var(--bg); border-radius: var(--radius); padding: 1rem 1.1rem; border: 1px solid var(--border); }
+  .metric-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--hint); margin-bottom: 4px; }
+  .metric-value { font-size: 26px; font-weight: 700; color: var(--brand); }
+  .metric-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .score-bar { height: 5px; border-radius: 3px; background: var(--border); margin-top: 8px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 3px; background: var(--brand); }
+
+  .info-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; gap: 12px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--muted); flex-shrink: 0; }
+  .info-val { color: var(--text); text-align: right; font-weight: 500; }
+
+  .success-circle { width: 60px; height: 60px; border-radius: 50%; background: var(--brand); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+  .success-circle svg { fill: #fff; width: 28px; height: 28px; }
+
+  .export-btn { display: block; width: 100%; padding: 13px; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid var(--brand); background: transparent; color: var(--brand); margin-top: 10px; transition: all 0.15s; }
+  .export-btn:hover { background: var(--brand-light); }
+
+  .divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+  @media (max-width: 420px) {
+    .result-grid { grid-template-columns: 1fr; }
+    .scale-btn { width: 44px; height: 44px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div class="logo-dot">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+    </div>
+    <div class="app-title">Diagnóstico de Carreira</div>
+    <div class="app-sub">Identifique seu perfil e caminhos de desenvolvimento</div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progress"></div>
+    <div class="progress-label" id="progress-label"></div>
+  </div>
+
+  <div id="content"></div>
+</div>
+
+<script>
+const sections = [
+  {
+    id: 'dados', label: 'Seção 1 — Dados básicos',
+    desc: 'Vamos começar com algumas informações sobre você.',
+    questions: [
+      { id: 'q1', text: 'Qual sua idade?', type: 'single', options: ['16–18','19–22','23–26','27+'] },
+      { id: 'q2', text: 'Qual seu curso?', type: 'text', placeholder: 'Ex: Administração, Engenharia...' },
+      { id: 'q3', text: 'Em qual semestre você está?', type: 'single', options: ['1º–2º','3º–4º','5º–6º','7º+'] },
+      { id: 'q4', text: 'Qual sua faculdade?', type: 'text', placeholder: 'Nome da instituição...' },
+    ]
+  },
+  {
+    id: 'momento', label: 'Seção 2 — Momento profissional',
+    desc: 'Como está sua vida profissional hoje?',
+    questions: [
+      { id: 'q5', text: 'Qual sua situação profissional atual?', type: 'single', options: ['Nunca trabalhei','Trabalho informalmente','Estágio','Emprego CLT','Freelancer','Empreendo'] },
+      { id: 'q6', text: 'Você já participou de processos seletivos?', type: 'single', options: ['Nunca','Poucas vezes','Frequentemente'] },
+      { id: 'q7', text: 'Você possui currículo atualizado?', type: 'single', options: ['Sim','Parcialmente','Não'] },
+      { id: 'q8', text: 'Você possui LinkedIn profissional?', type: 'single', options: ['Sim e utilizo frequentemente','Tenho, mas quase não utilizo','Não tenho'] },
+    ]
+  },
+  {
+    id: 'clareza', label: 'Seção 3 — Clareza de carreira',
+    desc: '1 = Discordo totalmente · 5 = Concordo totalmente',
+    questions: [
+      { id: 'q9', text: 'Sei claramente em qual área quero atuar.', type: 'scale' },
+      { id: 'q10', text: 'Tenho objetivos profissionais definidos.', type: 'scale' },
+      { id: 'q11', text: 'Sei quais competências preciso desenvolver.', type: 'scale' },
+      { id: 'q12', text: 'Sinto segurança sobre meu futuro profissional.', type: 'scale' },
+      { id: 'q13', text: 'Tenho um plano para alcançar meus objetivos.', type: 'scale' },
+      { id: 'q14', text: 'Entendo como funciona o mercado da minha área.', type: 'scale' },
+    ]
+  },
+  {
+    id: 'dificuldades', label: 'Seção 4 — Dificuldades',
+    desc: 'O que está travando seu crescimento?',
+    questions: [
+      { id: 'q15', text: 'Qual sua maior dificuldade profissional atualmente?', type: 'single', options: ['Não sei qual área seguir','Falta de experiência','Falta de networking','Insegurança profissional','Currículo fraco','Falta de orientação','Falta de tempo','Não consigo oportunidades','Outra'] },
+      { id: 'q16', text: 'O que mais te preocupa profissionalmente hoje?', type: 'textarea', placeholder: 'Descreva livremente...' },
+    ]
+  },
+  {
+    id: 'interesses', label: 'Seção 5 — Interesses profissionais',
+    desc: 'Para onde sua energia aponta?',
+    questions: [
+      { id: 'q17', text: 'Quais áreas despertam mais seu interesse? (múltipla escolha)', type: 'multi', options: ['Tecnologia','Recursos Humanos','Marketing','Finanças','Pesquisa','Gestão','Concursos','Empreendedorismo','Design','Comercial/Vendas','Outra'] },
+      { id: 'q18', text: 'O que você mais busca neste momento?', type: 'single', options: ['Primeiro estágio','Primeiro emprego','Mudança de área','Crescimento profissional','Desenvolvimento pessoal','Melhor remuneração','Clareza profissional'] },
+    ]
+  },
+  {
+    id: 'competencias', label: 'Seção 6 — Competências',
+    desc: '1 = Muito baixo · 5 = Muito bom',
+    questions: [
+      { id: 'q19', text: 'Comunicação', type: 'scale' },
+      { id: 'q20', text: 'Organização', type: 'scale' },
+      { id: 'q21', text: 'Liderança', type: 'scale' },
+      { id: 'q22', text: 'Inteligência emocional', type: 'scale' },
+      { id: 'q23', text: 'Trabalho em equipe', type: 'scale' },
+      { id: 'q24', text: 'Planejamento', type: 'scale' },
+      { id: 'q25', text: 'Capacidade analítica', type: 'scale' },
+      { id: 'q26', text: 'Networking', type: 'scale' },
+    ]
+  },
+  {
+    id: 'desenvolvimento', label: 'Seção 7 — Desenvolvimento profissional',
+    desc: 'Como você investe em si mesmo?',
+    questions: [
+      { id: 'q27', text: 'Você costuma investir no próprio desenvolvimento profissional?', type: 'single', options: ['Frequentemente','Às vezes','Raramente','Nunca'] },
+      { id: 'q28', text: 'Você já realizou cursos extracurriculares?', type: 'single', options: ['Muitos','Alguns','Poucos','Nenhum'] },
+      { id: 'q29', text: 'Quanto tempo semanal você dedica ao seu desenvolvimento profissional?', type: 'single', options: ['Nenhum','1–2 horas','3–5 horas','6+ horas'] },
+    ]
+  }
+];
+
+const answers = {};
+let current = 0;
+
+function save(id, val) { answers[id] = val; render(); }
+
+function toggleMulti(id, val) {
+  if (!answers[id]) answers[id] = [];
+  const i = answers[id].indexOf(val);
+  i === -1 ? answers[id].push(val) : answers[id].splice(i, 1);
+  render();
+}
+
+function renderProgress() {
+  const total = sections.length;
+  document.getElementById('progress').innerHTML = sections.map((_,i) => {
+    let cls = 'prog-seg';
+    if (i < current) cls += ' done';
+    else if (i === current) cls += ' active';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+  document.getElementById('progress-label').textContent = current < total
+    ? `Etapa ${current + 1} de ${total}` : 'Concluído';
+}
+
+function renderQ(q) {
+  let h = `<div class="question"><div class="q-text">${q.text}</div>`;
+  if (q.type === 'single') {
+    h += `<div class="chip-group">` + q.options.map(o =>
+      `<div class="chip${answers[q.id]===o?' selected':''}" onclick="save('${q.id}','${o.replace(/'/g,"\\'")}')">` + escHtml(o) + `</div>`
+    ).join('') + `</div>`;
+  } else if (q.type === 'multi') {
+    h += `<div class="chip-group">` + q.options.map(o => {
+      const sel = (answers[q.id]||[]).includes(o);
+      return `<div class="chip${sel?' selected':''}" onclick="toggleMulti('${q.id}','${o.replace(/'/g,"\\'")}')">` + escHtml(o) + `</div>`;
+    }).join('') + `</div>`;
+  } else if (q.type === 'scale') {
+    h += `<div class="scale-group">`;
+    for (let n=1;n<=5;n++) h += `<button class="scale-btn${answers[q.id]===n?' selected':''}" onclick="save('${q.id}',${n})">${n}</button>`;
+    h += `</div><div class="scale-labels"><span>Discordo totalmente</span><span>Concordo totalmente</span></div>`;
+  } else if (q.type === 'text') {
+    h += `<input class="txt-input" type="text" placeholder="${q.placeholder||''}" value="${escAttr(answers[q.id]||'')}" oninput="answers['${q.id}']=this.value" />`;
+  } else if (q.type === 'textarea') {
+    h += `<textarea class="txt-input" placeholder="${q.placeholder||''}" oninput="answers['${q.id}']=this.value">${escHtml(answers[q.id]||'')}</textarea>`;
+  }
+  return h + `</div>`;
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s) { return String(s).replace(/"/g,'&quot;'); }
+
+function calcScore(qs) {
+  const filled = qs.filter(q => answers[q]);
+  if (!filled.length) return 0;
+  return Math.round(filled.reduce((s,q) => s + answers[q], 0) / filled.length * 20);
+}
+
+function scoreLabel(v) {
+  if (v >= 80) return 'Excelente';
+  if (v >= 60) return 'Bom';
+  if (v >= 40) return 'Em desenvolvimento';
+  return 'Precisa de atenção';
+}
+
+function exportTxt() {
+  let out = 'DIAGNÓSTICO DE CARREIRA\n' + '='.repeat(40) + '\n\n';
+  sections.forEach(sec => {
+    out += sec.label.toUpperCase() + '\n' + '-'.repeat(30) + '\n';
+    sec.questions.forEach(q => {
+      const a = answers[q.id];
+      const val = Array.isArray(a) ? a.join(', ') : (a !== undefined ? String(a) : '—');
+      out += `• ${q.text}\n  → ${val}\n`;
+    });
+    out += '\n';
+  });
+  const clarity = calcScore(['q9','q10','q11','q12','q13','q14']);
+  const comp = calcScore(['q19','q20','q21','q22','q23','q24','q25','q26']);
+  out += '='.repeat(40) + '\nRESULTADOS\n' + '='.repeat(40) + '\n';
+  out += `Clareza de carreira: ${clarity}% (${scoreLabel(clarity)})\n`;
+  out += `Nível de competências: ${comp}% (${scoreLabel(comp)})\n`;
+  const blob = new Blob([out], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'diagnostico_carreira.txt';
+  a.click();
+}
+
+function renderResult() {
+  const clarity = calcScore(['q9','q10','q11','q12','q13','q14']);
+  const comp = calcScore(['q19','q20','q21','q22','q23','q24','q25','q26']);
+  const areas = (answers.q17||[]).join(', ') || '—';
+  const devMap = {Frequentemente:100,'Às vezes':66,Raramente:33,Nunca:0};
+  const dev = devMap[answers.q27] ?? 0;
+
+  return `
+  <div class="card" style="text-align:center;padding-bottom:1.5rem">
+    <div class="success-circle">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+    <div class="section-title">Diagnóstico concluído!</div>
+    <div class="section-desc" style="margin-top:6px">Veja abaixo o resumo do seu perfil profissional</div>
+  </div>
+
+  <div class="card">
+    <div class="section-badge">Scores</div>
+    <div class="result-grid">
+      <div class="metric-card">
+        <div class="metric-label">Clareza de carreira</div>
+        <div class="metric-value">${clarity}%</div>
+        <div class="metric-sub">${scoreLabel(clarity)}</div>
+        <div class="score-bar"><div class="score-fill" style="width:${clarity}%"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Competências</div>
+        <div class="metric-value">${comp}%</div>
+        <div class="metric-sub">${scoreLabel(comp)}</div>
+        <div class="score-bar"><div class="score-fill" style="width:${comp}%"></div></div>
+      </div>
+      <div class="metric-card" style="grid-column:1/-1">
+        <div class="metric-label">Investimento em desenvolvimento</div>
+        <div class="metric-value" style="font-size:18px">${answers.q27||'—'}</div>
+        <div class="score-bar" style="margin-top:10px"><div class="score-fill" style="width:${dev}%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-badge">Perfil</div>
+    <div class="divider" style="margin-top:.75rem"></div>
+    ${[
+      ['Idade', answers.q1],
+      ['Curso', answers.q2],
+      ['Semestre', answers.q3],
+      ['Faculdade', answers.q4],
+      ['Situação profissional', answers.q5],
+      ['Processos seletivos', answers.q6],
+      ['Currículo', answers.q7],
+      ['LinkedIn', answers.q8],
+      ['Maior dificuldade', answers.q15],
+      ['Áreas de interesse', areas],
+      ['O que busca', answers.q18],
+      ['Cursos extracurriculares', answers.q28],
+      ['Horas/semana p/ desenvolvimento', answers.q29],
+    ].map(([k,v]) => `
+      <div class="info-row">
+        <span class="info-key">${k}</span>
+        <span class="info-val">${escHtml(v||'—')}</span>
+      </div>`).join('')}
+    ${answers.q16 ? `<div style="margin-top:1rem;padding:12px;background:var(--bg);border-radius:var(--radius);font-size:13px;color:var(--muted);line-height:1.6"><strong style="color:var(--text);display:block;margin-bottom:4px">Preocupação principal</strong>${escHtml(answers.q16)}</div>` : ''}
+  </div>
+
+  <div class="card">
+    <div class="section-badge">Competências detalhadas</div>
+    <div style="margin-top:1rem">
+    ${[
+      ['q19','Comunicação'],['q20','Organização'],['q21','Liderança'],
+      ['q22','Inteligência emocional'],['q23','Trabalho em equipe'],
+      ['q24','Planejamento'],['q25','Capacidade analítica'],['q26','Networking']
+    ].map(([id, label]) => {
+      const v = answers[id] || 0;
+      return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <span style="font-size:13px;color:var(--muted);width:160px;flex-shrink:0">${label}</span>
+        <div style="flex:1;height:6px;border-radius:3px;background:var(--border);overflow:hidden">
+          <div style="height:100%;border-radius:3px;background:var(--brand);width:${v*20}%"></div>
+        </div>
+        <span style="font-size:13px;font-weight:600;color:var(--brand);width:16px;text-align:right">${v||'—'}</span>
+      </div>`;
+    }).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-badge">Exportar</div>
+    <div class="section-desc" style="margin-top:6px;margin-bottom:1rem">Salve suas respostas em um arquivo de texto</div>
+    <button class="export-btn" onclick="exportTxt()">⬇ Baixar resultado (.txt)</button>
+    <button class="export-btn" style="margin-top:8px" onclick="window.print()">🖨 Imprimir / salvar PDF</button>
+  </div>
+
+  <div style="text-align:center;margin-top:1.5rem">
+    <button class="btn" onclick="restart()">↺ Refazer diagnóstico</button>
+  </div>`;
+}
+
+function restart() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  current = 0;
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function render() {
+  renderProgress();
+  const c = document.getElementById('content');
+  if (current >= sections.length) { c.innerHTML = renderResult(); return; }
+  const sec = sections[current];
+  let h = `<div class="card">
+    <div class="section-badge">${sec.label}</div>
+    <div class="section-desc">${sec.desc}</div>
+    ${sec.questions.map(q => renderQ(q)).join('')}
+    <div class="nav-row" style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)">
+      ${current > 0 ? `<button class="btn" onclick="go(-1)">← Voltar</button>` : `<span></span>`}
+      <button class="btn btn-primary" onclick="go(1)">${current === sections.length - 1 ? 'Ver resultado →' : 'Próximo →'}</button>
+    </div>
+  </div>`;
+  c.innerHTML = h;
+}
+
+function go(dir) {
+  current = Math.max(0, Math.min(sections.length, current + dir));
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+render();
+</script>
+</body>
+</html>
